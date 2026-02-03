@@ -5,7 +5,10 @@
  * Simple script for automated daily attendance via SKPort API
  */
 
-const creds = process.env.CRED.split('\n').map(s => s.trim()).filter(Boolean)
+import crypto from 'crypto'
+
+const creds = (process.env.CRED || "").split('\n').map(s => s.trim()).filter(Boolean)
+const tokens = (process.env.TOKEN || "").split('\n').map(s => s.trim()).filter(Boolean)
 const discordWebhook = process.env.DISCORD_WEBHOOK
 const discordUser = process.env.DISCORD_USER
 
@@ -17,9 +20,21 @@ const messages = []
 let hasErrors = false
 
 /**
- * Build headers for SKPort API
+ * Resolve token for account index. If tokens list has one entry, use it for all accounts.
  */
-function buildHeaders(cred, gameRole = null) {
+function resolveTokenForIndex(index) {
+  if (!tokens || tokens.length === 0) return undefined
+  if (tokens.length === 1) return tokens[0]
+  return tokens[index] || undefined
+}
+
+/**
+ * Build headers for SKPort API
+ * Accepts optional timestamp so the same timestamp can be used in the sign computation.
+ */
+function buildHeaders(cred, gameRole = null, timestamp = null) {
+  const ts = timestamp || Math.floor(Date.now() / 1000).toString()
+
   const headers = {
     'accept': 'application/json, text/plain, */*',
     'content-type': 'application/json',
@@ -28,7 +43,7 @@ function buildHeaders(cred, gameRole = null) {
     'cred': cred,
     'platform': '3',
     'sk-language': 'en',
-    'timestamp': Math.floor(Date.now() / 1000).toString(),
+    'timestamp': ts,
     'vname': '1.0.0',
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
   }
@@ -41,11 +56,32 @@ function buildHeaders(cred, gameRole = null) {
 }
 
 /**
- * Fetch player binding to get all roles
- * Returns array of roles with gameRole formatted
+ * Compute V2-style sign header: MD5(HMAC-SHA256(path + timestamp + headers_json, token))
+ * token = secret salt (from TOKENS env)
  */
-async function getPlayerRoles(cred) {
-  const headers = buildHeaders(cred)
+function signHeader(path, timestamp, platform, vName, token) {
+  if (!token) return null
+  const headerJson = JSON.stringify({ platform, timestamp, dId: "", vName })
+  const s = `${path}${timestamp}${headerJson}`
+  const hmac = crypto.createHmac("sha256", token).update(s).digest("hex")
+  return crypto.createHash("md5").update(hmac).digest("hex")
+}
+
+/**
+ * Fetch player binding to get all roles
+ * Accepts token used to sign the binding request (if available)
+ */
+async function getPlayerRoles(cred, token) {
+  const path = '/api/v1/game/player/binding'
+  const timestamp = Math.floor(Date.now() / 1000).toString()
+  const headers = buildHeaders(cred, null, timestamp)
+
+  // Add sign header if token provided
+  if (token) {
+    const sign = signHeader(path, timestamp, '3', '1.0.0', token)
+    if (sign) headers['sign'] = sign
+  }
+
   const res = await fetch(BINDING_URL, { method: 'GET', headers })
   const json = await res.json()
 
@@ -87,6 +123,7 @@ async function getPlayerRoles(cred) {
 
 /**
  * Check if already signed in today
+ * (headers should already include timestamp and sign if desired)
  */
 async function checkAttendance(headers) {
   const res = await fetch(ATTENDANCE_URL, { method: 'GET', headers })
@@ -104,6 +141,7 @@ async function checkAttendance(headers) {
 
 /**
  * Claim daily attendance
+ * (headers should already include timestamp and sign if desired)
  */
 async function claimAttendance(headers) {
   const res = await fetch(ATTENDANCE_URL, { method: 'POST', headers, body: null })
@@ -130,9 +168,18 @@ async function claimAttendance(headers) {
 
 /**
  * Run check-in for a single role
+ * token is the secret salt token used for signing (if available)
  */
-async function checkInRole(cred, role) {
-  const headers = buildHeaders(cred, role.gameRole)
+async function checkInRole(cred, role, token) {
+  const path = '/web/v1/game/endfield/attendance'
+  const timestamp = Math.floor(Date.now() / 1000).toString()
+  const headers = buildHeaders(cred, role.gameRole, timestamp)
+
+  // Add sign header when token provided
+  if (token) {
+    const sign = signHeader(path, timestamp, '3', '1.0.0', token)
+    if (sign) headers['sign'] = sign
+  }
 
   // Check status
   const status = await checkAttendance(headers)
@@ -150,13 +197,13 @@ async function checkInRole(cred, role) {
 /**
  * Run check-in for a single account (all roles)
  */
-async function run(cred, accountIndex) {
+async function run(cred, token, accountIndex) {
   log('debug', `\n----- CHECKING IN FOR ACCOUNT ${accountIndex} -----`)
 
   try {
-    // Step 1: Get all player roles
+    // Step 1: Get all player roles (include sign if token present)
     log('debug', 'Fetching player binding...')
-    const roles = await getPlayerRoles(cred)
+    const roles = await getPlayerRoles(cred, token)
 
     log('info', `Account ${accountIndex}:`, `Found ${roles.length} role(s)`)
 
@@ -165,7 +212,7 @@ async function run(cred, accountIndex) {
       const roleLabel = `${role.nickname} (Lv.${role.level}) [${role.server}]`
 
       try {
-        const result = await checkInRole(cred, role)
+        const result = await checkInRole(cred, role, token)
 
         if (result.alreadyClaimed) {
           log('info', `  → ${roleLabel}:`, 'Already checked in today')
@@ -243,7 +290,8 @@ if (!creds || !creds.length) {
 }
 
 for (const index in creds) {
-  await run(creds[index], Number(index) + 1)
+  const token = resolveTokenForIndex(Number(index))
+  await run(creds[index], token, Number(index) + 1)
 
   // Delay between accounts
   if (index < creds.length - 1) {
