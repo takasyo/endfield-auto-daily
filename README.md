@@ -6,9 +6,13 @@ Today's check in status:
 Repository version:
 [![Do your setup!](../../actions/workflows/version.yml/badge.svg)](../../actions/workflows/version.yml)
 
+> [!NOTE]
+> The script might stop working after a few months, there is currently no way of knowing when it will definitely break.
+> If the status failed several times, try to redo your setup again before reporting it as an issue.
+
 ## Table of Contents
 
-- [Getting your auth token](#getting-your-auth-token)
+- [Getting your account token](#getting-your-account-token)
 - [Usage](#usage)
 - [Discord Webhook](#discord-webhook)
 - [FAQ](#faq)
@@ -16,9 +20,9 @@ Repository version:
   - [How to update my (fork) repository version?](#how-to-update-my-fork-repository-version)
   - [I have other issues](#i-have-other-issues)
 
-## Getting your auth token
+## Getting your account token
 
-You have to check in manually first to get your auth token, follow these steps (click to open screenshot):
+You have to check in manually first to get your account token, follow these steps (click to open screenshot):
 
 1. Open [SKPORT Arknights: Endfield Daily Sign In](https://game.skport.com/endfield/sign-in) and login if you haven't (obviously)
 
@@ -28,25 +32,15 @@ You have to check in manually first to get your auth token, follow these steps (
    </details>
 
 4. <details>
-   <summary>For Chromium users, click on the Application tab. If not found, click on the arrow.</summary>
-   <img width="1400" height="428" alt="image" src="https://github.com/user-attachments/assets/ab0b03eb-da88-4106-8aa3-f9b6565c8836" />
+   <summary>For Chromium users, click on the Application tab -> Cookies, click on <code>ACCOUNT_TOKEN</code>, and check <code>Show URL-encoded</code>.</summary>
+   <img width="1057" height="369" alt="image" src="https://github.com/user-attachments/assets/fd4e6f55-f0c6-4f07-934c-d46b3a5bde12" />
    </details>
    <details>
-   <summary>For Firefox/Gecko-based browsers, click on the Storage tab.</summary>
-   <img width="1126" height="356" alt="image" src="https://github.com/user-attachments/assets/4f4c6491-4fd0-47f5-9fb0-5983acc80596" />
+   <summary>For Firefox/Gecko-based browsers, click on the Storage tab -> Cookies, and copy <code>ACCOUNT_TOKEN</code> value.</summary>
+   <img width="970" height="244" alt="image" src="https://github.com/user-attachments/assets/1b54d2a3-4b23-4b7a-b9cf-cf47d5ca45d8" />
    </details>
 
-5. <details>
-   <summary>Just like the screenshot above, click on Local Storage and look for <code>SK_OAUTH_CRED_KEY</code> and <code>SK_TOKEN_CACHE_KEY</code>. Copy both!</summary>
-   <img width="1400" height="428" alt="image" src="https://github.com/user-attachments/assets/42b6bb60-dd98-4a50-b174-3b2d99491948" />
-   </details>
-
-6. <details>
-   <summary>Copy the value by clicking on it, then selecting the text below. Or just double-click and Ctrl+C</summary>
-   <img width="861" height="170" alt="image" src="https://github.com/user-attachments/assets/e29ad0d1-0d40-408b-8fc4-ea0b0f8acfed" />
-   </details>
-
-7. That's your auth credentials and token, keep it save and do NOT share it with anyone!
+5. That's your account token, keep it save and do NOT share it with anyone!
 
 ## Usage
 
@@ -59,20 +53,18 @@ You have to check in manually first to get your auth token, follow these steps (
 
 5. <details>
    <summary>
-      Insert both <code>SK_OAUTH_CRED_KEY</code> and <code>SK_TOKEN_CACHE_KEY</code> then click Add secret. You can input as many accounts, separate it with a new line (Enter).
+      Insert the name <code>ACCOUNT_TOKEN</code> and the secret of your account token from before, then click Add secret. You can input as many accounts, separate it with a new line (Enter).
    </summary>
-   <img width="457" height="425" alt="image" src="https://github.com/user-attachments/assets/25c8cbee-160c-495a-b0e8-557840735965" />
-   <img width="457" height="426" alt="image" src="https://github.com/user-attachments/assets/bb53a94c-4106-4444-8cae-a158a82168f9" />
-   </details>
+   <img width="798" height="422" alt="image" src="https://github.com/user-attachments/assets/3f1242f0-550d-42c3-97b5-399ecdade4ed" />
+  </details>
 
 6. <details>
    <summary>
-     Here is the example for multiple accounts and your environments should now look like this.
+     Here is the example secret value for multiple accounts.
    </summary>
-   <img width="421" height="430" alt="image" src="https://github.com/user-attachments/assets/89630067-3498-4991-b897-30ef98d9066b" />
-   <img width="802" height="212" alt="image" src="https://github.com/user-attachments/assets/c6d129a1-dfc6-4915-ac45-f96539e94ba3" />
+   <img width="348" height="426" alt="image" src="https://github.com/user-attachments/assets/d5d816b6-f11d-4782-b881-df0fd27d68e7" />
    </details>
-   
+
 7. <details>
    <summary>
       For the first day, you have to trigger this manually.

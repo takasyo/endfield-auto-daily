@@ -20,8 +20,7 @@ jobs:
       - name: Check In
         run: node index.js
         env:
-          SK_OAUTH_CRED_KEY: ${{ secrets.SK_OAUTH_CRED_KEY }}
-          SK_TOKEN_CACHE_KEY: ${{ secrets.SK_TOKEN_CACHE_KEY }}
+          ACCOUNT_TOKEN: ${{ secrets.ACCOUNT_TOKEN }}
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
           DISCORD_USER: ${{ secrets.DISCORD_USER }}
   workflow-keepalive:

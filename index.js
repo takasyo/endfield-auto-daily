@@ -7,7 +7,7 @@
 
 import crypto from 'crypto'
 
-const accountTokens = (process.env.ACCOUNT_TOKEN || "").split('\n').map(s => s.trim()).filter(Boolean)
+const accountTokens = (process.env.ACCOUNT_TOKEN || "").split('\n').map(s => decodeURIComponent(s.trim())).filter(Boolean)
 const discordWebhook = process.env.DISCORD_WEBHOOK
 const discordUser = process.env.DISCORD_USER
 
